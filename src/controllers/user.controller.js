@@ -362,6 +362,7 @@ const getUserProfile = asynchandler(async(req,res)=>{
     if(!username?.trim()){
         throw new ApiError(400,"Username is Required!!")
     }
+    const user = await User.findOne({username: username.toLowerCase()})
     const profile = await User.aggregate([
       {
          $match: {
@@ -395,7 +396,7 @@ const getUserProfile = asynchandler(async(req,res)=>{
             isFollowing: {
                $cond: {
                   if: {
-                     $in: [req.user._id, "$followers.follower"]
+                     $in: [user._id, "$followers.follower"]
                   },
                   then: true,
                   else: false
@@ -424,6 +425,10 @@ const getUserProfile = asynchandler(async(req,res)=>{
       new ApiResponse(200,profile[0],"User Profile Fetched Successfully!!")
    )
 })
+
+
+
+
 
 // update user details //changepass //forgot password //delete account //email verification
 export { Registeruser, loginUser, loggedOutUser,

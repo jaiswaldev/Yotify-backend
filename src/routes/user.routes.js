@@ -36,5 +36,7 @@ router.route("/edit-details").post(verifyJWT,
 router.route("/checkPassword").post(verifyJWT, checkOldPassword)
 router.route("/updatePassword").post(verifyJWT, updatePassword)
 router.route("/deleteUser").get(verifyJWT, deleteUser)
-router.route("/c/:username").get(verifyJWT,getUserProfile)
+router.route("/c/:username").get(getUserProfile)
+
+
 export default router;
