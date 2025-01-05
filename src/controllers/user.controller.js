@@ -357,7 +357,8 @@ const deleteUser = asynchandler(async(req,res)=>{
 
 const getUserProfile = asynchandler(async(req,res)=>{
     const {username} = req.params
-
+   //  console.log(username)
+   //  console.log(req.user._id)
     if(!username?.trim()){
         throw new ApiError(400,"Username is Required!!")
     }
@@ -414,7 +415,7 @@ const getUserProfile = asynchandler(async(req,res)=>{
          }
       }
     ])
-
+   // console.log(profile)
    if(!profile?.length){
       throw new ApiError(404,"User Not Found!!")
    }
@@ -423,8 +424,8 @@ const getUserProfile = asynchandler(async(req,res)=>{
       new ApiResponse(200,profile[0],"User Profile Fetched Successfully!!")
    )
 })
- 
+
 // update user details //changepass //forgot password //delete account //email verification
 export { Registeruser, loginUser, loggedOutUser,
-    refreshAccessToken , changeUserDetails,checkOldPassword,updatePassword,deleteUser};
+    refreshAccessToken , changeUserDetails,checkOldPassword,updatePassword,deleteUser,getUserProfile};
 

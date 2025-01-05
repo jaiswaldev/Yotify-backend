@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Registeruser, loginUser, loggedOutUser, refreshAccessToken , changeUserDetails,
-    checkOldPassword,updatePassword,deleteUser} from "../controllers/user.controller.js";
+    checkOldPassword,updatePassword,deleteUser,getUserProfile} from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middlewares.js"
 import { verifyJWT } from "../middlewares/authentication.middlewares.js"
 const router = Router();
@@ -36,5 +36,5 @@ router.route("/edit-details").post(verifyJWT,
 router.route("/checkPassword").post(verifyJWT, checkOldPassword)
 router.route("/updatePassword").post(verifyJWT, updatePassword)
 router.route("/deleteUser").get(verifyJWT, deleteUser)
-
+router.route("/c/:username").get(verifyJWT,getUserProfile)
 export default router;
