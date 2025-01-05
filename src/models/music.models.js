@@ -41,7 +41,7 @@ const musicSchema = new Schema({
 })
 
 
-videoSchema.plugin(mongooseAggregatePaginate)
+musicSchema.plugin(mongooseAggregatePaginate)
 
 
 export const Music = mongoose.model("Music",musicSchema)

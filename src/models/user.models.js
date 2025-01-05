@@ -32,10 +32,10 @@ const userSchema = new Schema({
     coverImage:{
         type: String,
     },  
-    watchHistory:[
+    listeningHistory:[
         {
             type: Schema.Types.ObjectId,
-            ref: "Video"
+            ref: "Music"
         }
     ],
     password:{

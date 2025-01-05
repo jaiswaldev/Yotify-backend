@@ -5,6 +5,7 @@ import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 
 const generateAccessAndRefereshTokens = async(userId)=>{
@@ -182,7 +183,7 @@ const loginUser = asynchandler(async (req,res)=>{
 
    //response.
    const loggedInUser = await User.findById(existed._id).select(
-      "-password -refreshToken"
+      "-password -refreshToken "
    )
 
    //step5.
@@ -270,23 +271,27 @@ const  changeUserDetails = asynchandler(async(req,res)=>{
    //send response.
    // console.log(req.body)
    let {avatar,coverImage} = req.body
-   const {username,fullname} = req.body 
+   const {username,fullname} = req.body
    // console.log(req.user)
    let avatarLocalPath;
+   // console.log(req.files)
    if(req.files && Array.isArray(req.files.avatar) && req.files.avatar.length>0){
       avatarLocalPath = req.files.avatar[0].path
    }
+
    let coverImageLocalPath;
    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length>0){
       coverImageLocalPath = req.files.coverImage[0].path
    }
-
+   // console.log(avatarLocalPath)
+   // console.log(coverImageLocalPath)
    if(avatarLocalPath){
       avatar = await uploadOnCloudinary(avatarLocalPath)
    }
    if(coverImageLocalPath){
       coverImage = await uploadOnCloudinary(coverImageLocalPath)
    }
+   // console.log(avatar)
    const Updateduser = await User.findByIdAndUpdate(
       req.user._id,
       {
@@ -426,11 +431,61 @@ const getUserProfile = asynchandler(async(req,res)=>{
    )
 })
 
+const getHistory = asynchandler(async(req,res)=>{
+   const user = await User.aggregate([
+      {
+         $match: {
+            _id: new mongoose.Types.ObjectId(req.user._id)
+         }
+      },
+      {
+         $lookup: {
+            from: "musics",
+            localField: "listeningHistory",
+            foreignField: "_id",
+            as: "ListeningHistory",
+            pipeline: [
+               {
+                  $lookup: {
+                     from: "users",
+                     localField: "owner",
+                     foreignField: "_id",
+                     as: "owner",
+                     pipeline:[
+                        {
+                           $project: {
+                              username: 1,
+                              fullname: 1,
+                              avatar: 1,
+                              follower_count: 1,   
+                              following_count: 1,
+                              isFollowing: 1
+                           }
+                        },
+                        {
+                           $addFields:{
+                              owner: {
+                                 $first: "$owner"
+                              }
+                           }
+                        }
+                     ]
+                  }
+               },
+              
+            ]
+         }
+      }
+   ])
 
+   return res.status(200).json(
+      new ApiResponse(200,user[0].ListeningHistory,"User History Fetched Successfully!!")
+   )
+})
 
 
 
 // update user details //changepass //forgot password //delete account //email verification
 export { Registeruser, loginUser, loggedOutUser,
-    refreshAccessToken , changeUserDetails,checkOldPassword,updatePassword,deleteUser,getUserProfile};
+    refreshAccessToken , changeUserDetails,checkOldPassword,updatePassword,deleteUser,getUserProfile,getHistory};
 
