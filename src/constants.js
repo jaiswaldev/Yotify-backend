@@ -1,1 +1,1 @@
-    export const DB_NAME = "Pro-Tube"
+    export const DB_NAME = "Yotify"

@@ -355,7 +355,74 @@ const deleteUser = asynchandler(async(req,res)=>{
    )
 })
 
+const getUserProfile = asynchandler(async(req,res)=>{
+    const {username} = req.params
 
+    if(!username?.trim()){
+        throw new ApiError(400,"Username is Required!!")
+    }
+    const profile = await User.aggregate([
+      {
+         $match: {
+            username: username?.toLowerCase()
+         }
+      },
+      {
+           $lookup: {
+              from: "accounts",
+              localField: "_id",
+              foreignField: "following",
+              as: "followers"
+           }
+      },
+      {
+         $lookup: {
+            from: "accounts",
+            localField: "_id",
+            foreignField: "follower",
+            as: "followings"
+         }
+      },
+      {
+         $addFields: {
+            follower_count: {
+               $size: "$followers"
+            },
+            following_count: {
+               $size: "$followings"
+            },
+            isFollowing: {
+               $cond: {
+                  if: {
+                     $in: [req.user._id, "$followers.follower"]
+                  },
+                  then: true,
+                  else: false
+               }  
+            }
+         }
+      },
+      {
+         $project: {
+            follower_count: 1,
+            following_count: 1,
+            username: 1,
+            fullname: 1,
+            avatar: 1,
+            coverImage: 1,
+            isFollowing: 1
+         }
+      }
+    ])
+
+   if(!profile?.length){
+      throw new ApiError(404,"User Not Found!!")
+   }
+
+   return res.status(200).json(
+      new ApiResponse(200,profile[0],"User Profile Fetched Successfully!!")
+   )
+})
  
 // update user details //changepass //forgot password //delete account //email verification
 export { Registeruser, loginUser, loggedOutUser,
