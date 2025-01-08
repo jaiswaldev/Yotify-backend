@@ -206,7 +206,7 @@ const loginUser = asynchandler(async (req,res)=>{
 const loggedOutUser = asynchandler(async (req,res)=>{
    //delete refereshtoken from database.
    //delete cookies from user.
-   // console.log(req.user)
+   //console.log(req.user)
    await User.findByIdAndUpdate(
       req.user._id,
       {
@@ -225,7 +225,7 @@ const loggedOutUser = asynchandler(async (req,res)=>{
    }
 
    return res.status(200).clearCookie("accessToken",options)
-   .clearCookie("RefreshToken",options)
+   .clearCookie("refreshToken",options)
    .json(new ApiResponse(200,{},"Successfully LoggedOut!!"))
 })
 

@@ -161,14 +161,42 @@ const addAdmin = asynchandler(async (req, res) => {
     const user = {
       email: isUser.email,
       username: isUser.username,
-    }
+    };
 
     const admin = await Admin.create(user);
 
     return res
       .status(201)
       .json(new ApiResponse(201, admin, "Admin created successfully!!"));
-  } catch (error){
+  } catch (error) {
+    throw new ApiError(
+      error.status || 500,
+      error.message || "An unexpected error occurred!!"
+    );
+  }
+});
+
+const adminlogout = asynchandler(async (req, res) => {
+  try {
+    await Admin.findByIdAndUpdate(
+      req.admin._id,
+      {
+        $set: {
+          refreshToken: null,
+        }
+      },
+      { new: true }
+    );
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+    return res
+      .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json(new ApiResponse(200, {}, "Successfully Admin LoggedOut!!"));
+  } catch (error) {
     throw new ApiError(
       error.status || 500,
       error.message || "An unexpected error occurred!!"
@@ -178,4 +206,4 @@ const addAdmin = asynchandler(async (req, res) => {
 
 
 
-export { adminlogin, addAdmin };
+export { adminlogin, addAdmin ,adminlogout};
