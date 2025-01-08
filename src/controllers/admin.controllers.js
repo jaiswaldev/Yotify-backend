@@ -7,30 +7,27 @@ import { isValidEmail } from "../utils/validations.js";
 import { User } from "../models/user.models.js";
 import { Admin } from "../models/admin.models.js";
 
-
-const generateAccessAndRefereshTokens = async(adminId)=>{
-  try{
+const generateAccessAndRefereshTokens = async (adminId) => {
+  try {
     //  console.log(adminId)
-     const admin = await Admin.findById(adminId)
+    const admin = await Admin.findById(adminId);
     //  console.log(admin)
-     const AccessToken = await admin.generateAccessToken()
+    const AccessToken = await admin.generateAccessToken();
     //  console.log(AccessToken)
-     const RefreshToken = await admin.generateRefreshToken()
+    const RefreshToken = await admin.generateRefreshToken();
     //  console.log(RefreshToken)
-     admin.refreshToken = RefreshToken;
-     // console.log(user)
-     await admin.save({validateBeforeSave: false})
-  
-    
+    admin.refreshToken = RefreshToken;
+    // console.log(user)
+    await admin.save({ validateBeforeSave: false });
 
-     return {AccessToken,RefreshToken}
-
-  }catch(error){
-     throw new ApiError(500,"semething went wrong,while generating Tokens!!please try Again Later.")
+    return { AccessToken, RefreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "semething went wrong,while generating Tokens!!please try Again Later."
+    );
   }
-}
-
-
+};
 
 // const uploadMusic = asynchandler(async (req, res) => {
 //   try {
@@ -83,18 +80,18 @@ const adminlogin = asynchandler(async (req, res) => {
       throw new ApiError(400, "Please provide Registered username or Email!!");
     }
 
-    if(email && !isValidEmail(email)){
+    if (email && !isValidEmail(email)) {
       throw new ApiError(400, "Invalid Email!!");
     }
-    const useradmin = await User.findOne({ 
-        $or: [{email},{username}]
+    const useradmin = await User.findOne({
+      $or: [{ email }, { username }],
     });
     if (!useradmin) {
       throw new ApiError(404, "You Need to Register First!!");
     }
-    const admin = await Admin.findOne({ 
-        $or: [{email},{username}]
-     });
+    const admin = await Admin.findOne({
+      $or: [{ email }, { username }],
+    });
     if (!admin) {
       throw new ApiError(404, "Admin not found!!");
     }
@@ -105,26 +102,73 @@ const adminlogin = asynchandler(async (req, res) => {
       throw new ApiError(400, "Invalid Password!!");
     }
 
-    const{AccessToken,RefreshToken} =  await generateAccessAndRefereshTokens(admin._id)
+    const { AccessToken, RefreshToken } = await generateAccessAndRefereshTokens(
+      admin._id
+    );
 
     const loggedInAdmin = await Admin.findById(admin._id).select(
       "-refreshToken"
-    )
-    const options= {
-      httpOnly:true,
-      secure:true
+    );
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", AccessToken, options)
+      .cookie("refreshToken", RefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            admin: loggedInAdmin,
+            AccessToken,
+            RefreshToken,
+          },
+          "Admin Logged In Successfully!!"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(
+      error.status || 500,
+      error.message || "An unexpected error occurred!!"
+    );
+  }
+});
+
+const addAdmin = asynchandler(async (req, res) => {
+  try {
+    const { email, username } = req.body;
+    if (!username && !email) {
+      throw new ApiError(400, "Please provide Registered username or Email!!");
+    }
+    if (email && !isValidEmail(email)) {
+      throw new ApiError(400, "Invalid Email!!");
+    }
+    const isUser = await User.findOne({
+      $or: [{ email }, { username }],
+    });
+    if (!isUser) {
+      throw new ApiError(404, "User not present,He need to Register first!!");
+    }
+    const isAdmin = await Admin.findOne({
+      $or: [{ email }, { username }],
+    });
+    if (isAdmin) {
+      throw new ApiError(400, "Admin already exists!!");
+    }
+    const user = {
+      email: isUser.email,
+      username: isUser.username,
     }
 
+    const admin = await Admin.create(user);
 
-    return res.status(200).cookie("accessToken",AccessToken,options)
-    .cookie("refreshToken",RefreshToken,options).json(
-       new ApiResponse(200,{
-          admin: loggedInAdmin,
-          AccessToken,
-          RefreshToken
-       },
-    "Admin Logged In Successfully!!"))
-  } catch (error) {
+    return res
+      .status(201)
+      .json(new ApiResponse(201, admin, "Admin created successfully!!"));
+  } catch (error){
     throw new ApiError(
       error.status || 500,
       error.message || "An unexpected error occurred!!"
@@ -134,11 +178,4 @@ const adminlogin = asynchandler(async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-export { adminlogin };
+export { adminlogin, addAdmin };
