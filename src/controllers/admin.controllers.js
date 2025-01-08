@@ -7,6 +7,31 @@ import { isValidEmail } from "../utils/validations.js";
 import { User } from "../models/user.models.js";
 import { Admin } from "../models/admin.models.js";
 
+
+const generateAccessAndRefereshTokens = async(adminId)=>{
+  try{
+    //  console.log(adminId)
+     const admin = await Admin.findById(adminId)
+    //  console.log(admin)
+     const AccessToken = await admin.generateAccessToken()
+    //  console.log(AccessToken)
+     const RefreshToken = await admin.generateRefreshToken()
+    //  console.log(RefreshToken)
+     admin.refreshToken = RefreshToken;
+     // console.log(user)
+     await admin.save({validateBeforeSave: false})
+  
+    
+
+     return {AccessToken,RefreshToken}
+
+  }catch(error){
+     throw new ApiError(500,"semething went wrong,while generating Tokens!!please try Again Later.")
+  }
+}
+
+
+
 // const uploadMusic = asynchandler(async (req, res) => {
 //   try {
 //     const { title, description, artist } = req.body;
@@ -58,7 +83,9 @@ const adminlogin = asynchandler(async (req, res) => {
       throw new ApiError(400, "Please provide Registered username or Email!!");
     }
 
-    isValidEmail(email);
+    if(email && !isValidEmail(email)){
+      throw new ApiError(400, "Invalid Email!!");
+    }
     const useradmin = await User.findOne({ 
         $or: [{email},{username}]
     });
@@ -78,10 +105,25 @@ const adminlogin = asynchandler(async (req, res) => {
       throw new ApiError(400, "Invalid Password!!");
     }
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, admin, "Admin logged in!!"));
+    const{AccessToken,RefreshToken} =  await generateAccessAndRefereshTokens(admin._id)
 
+    const loggedInAdmin = await Admin.findById(admin._id).select(
+      "-refreshToken"
+    )
+    const options= {
+      httpOnly:true,
+      secure:true
+    }
+
+
+    return res.status(200).cookie("accessToken",AccessToken,options)
+    .cookie("refreshToken",RefreshToken,options).json(
+       new ApiResponse(200,{
+          admin: loggedInAdmin,
+          AccessToken,
+          RefreshToken
+       },
+    "Admin Logged In Successfully!!"))
   } catch (error) {
     throw new ApiError(
       error.status || 500,
@@ -89,5 +131,14 @@ const adminlogin = asynchandler(async (req, res) => {
     );
   }
 });
+
+
+
+
+
+
+
+
+
 
 export { adminlogin };
