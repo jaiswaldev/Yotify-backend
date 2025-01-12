@@ -181,8 +181,8 @@ const adminlogout = asynchandler(async (req, res) => {
     await Admin.findByIdAndUpdate(
       req.admin._id,
       {
-        $set: {
-          refreshToken: null,
+        $unset: {
+          refreshToken: "",
         }
       },
       { new: true }
